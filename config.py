@@ -5,9 +5,7 @@ from functools import lru_cache
 
 class BaseConfig(BaseSettings):
     ENV_STATE: Optional[str] = None
-
-    class Config:
-        env_file: str = ".env"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 class GlobalConfig(BaseConfig):
@@ -26,6 +24,7 @@ class ProdConfig(GlobalConfig):
 class TestConfig(GlobalConfig):
     DATABASE_URL: str = "sqlite:///test.db"
     DB_FORCE_ROLL_BACK: bool = True
+
     model_config = SettingsConfigDict(env_prefix="TEST_")
 
 
