@@ -1,0 +1,5 @@
+pytest
+pytest-mock
+httpx
+pytest-anyio
+isort
