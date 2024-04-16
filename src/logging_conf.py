@@ -3,7 +3,6 @@ from src.config import DevConfig, config
 
 
 def configure_logging() -> None:
-    level = "DEBUG" if isinstance(config, DevConfig) else "INFO"
     dictConfig(
         {
             "version": 1,
@@ -26,15 +25,27 @@ def configure_logging() -> None:
 
             "root": {
                 "handlers": ["default"],
-                "level": level,
+                "level": "DEBUG" if isinstance(config, DevConfig) else "INFO",
             },
 
             "loggers": {
+                "uvicorn": {
+                    "handlers": ["default"],
+                    "level": "INFO",
+                },
                 "src": {
                     "handlers": ["default"],
-                    "level": level,
+                    "level": "DEBUG" if isinstance(config, DevConfig) else "INFO",
                     "propagate": False,
 
+                },
+                "databases": {
+                    "handlers": ["default"],
+                    "level": "WARNING"
+                },
+                "aiosqlite": {
+                    "handlers": ["default"],
+                    "level": "WARNING"
                 }
             }
         }
