@@ -2,6 +2,7 @@ import logging
 
 from fastapi import FastAPI
 from src.routers.post import router as post_router
+from src.routers.user import router as user_router
 from contextlib import asynccontextmanager
 from src.database import database
 
@@ -34,3 +35,4 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(post_router, prefix="")
+app.include_router(user_router, prefix="")
