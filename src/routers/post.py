@@ -1,5 +1,5 @@
 from typing import List
-from models.post import (
+from src.models.post import (
     UserPost,
     UserPostIn,
     Comment,
@@ -7,7 +7,7 @@ from models.post import (
     UserPostWithComments
 )
 from fastapi import APIRouter, HTTPException
-from database import comment_table, post_table, database
+from src.database import comment_table, post_table, database
 
 router = APIRouter()
 
