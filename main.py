@@ -1,7 +1,11 @@
+import logging
+
 from fastapi import FastAPI
-from routers.post import router as post_router
+from src.routers.post import router as post_router
 from contextlib import asynccontextmanager
-from database import database
+from src.database import database
+
+from src.logging_conf import configure_logging
 
 
 @asynccontextmanager
@@ -22,6 +26,7 @@ async def lifespan(app: FastAPI):
     None: This context manager does not yield any value but ensures database
           connection management.
     """
+    configure_logging()
     await database.connect()
     yield
     await database.disconnect()
