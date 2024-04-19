@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, status
 from src.models.user import UserIn
-from src.security import get_user
+from src.security import get_user, get_password_hash, verify_password
 from src.database import database, user_table
 
 
@@ -19,10 +19,11 @@ async def register(user: UserIn):
             detail='Email already registered'
         )
 
-    # TODO make encryption for password!
+    hashed_password = get_password_hash(user.password)
+
     query = user_table.insert().values(
         email=user.email,
-        password=user.password
+        password=hashed_password
     )
 
     logger.debug(query)
