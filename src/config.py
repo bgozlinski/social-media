@@ -11,6 +11,8 @@ class BaseConfig(BaseSettings):
 class GlobalConfig(BaseConfig):
     DATABASE_URL: Optional[str] = None
     DB_FORCE_ROLL_BACK: bool = False
+    SECRET_KEY: Optional[str] = None
+    ALGORITHM: str = "HS256"
 
 
 class DevConfig(GlobalConfig):
@@ -24,6 +26,8 @@ class ProdConfig(GlobalConfig):
 class TestConfig(GlobalConfig):
     DATABASE_URL: str = "sqlite:///test.db"
     DB_FORCE_ROLL_BACK: bool = True
+    SECRET_KEY: str = "test"
+    ALGORITHM: str = "HS256"
 
     model_config = SettingsConfigDict(env_prefix="TEST_")
 
