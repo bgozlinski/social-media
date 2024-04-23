@@ -1,8 +1,8 @@
 import logging
 import datetime
-from typing import Optional
+from typing import Optional, Annotated
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 
 from jose import jwt
@@ -112,7 +112,7 @@ async def authenticate_user(email: str, password: str) -> dict:
     return user
 
 
-async def get_current_user(token: str) -> Optional[dict]:
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Optional[dict]:
 
     try:
         payload = jwt.decode(token=token, key=config.SECRET_KEY, algorithms=[config.ALGORITHM])
