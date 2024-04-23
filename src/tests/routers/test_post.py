@@ -14,11 +14,12 @@ async def create_post(body: str,
     return response.json()
 
 
-async def create_comment(body: str,
-                         post_id: int,
-                         async_client: AsyncClient,
-                         logged_in_token: str
-                         ) -> dict:
+async def create_comment(
+        body: str,
+        post_id: int,
+        async_client: AsyncClient,
+        logged_in_token: str
+) -> dict:
     response = await async_client.post(
         "/comment",
         json={"body": body, "post_id": post_id},
@@ -29,12 +30,19 @@ async def create_comment(body: str,
 
 
 @pytest.fixture()
-async def created_post(async_client: AsyncClient, logged_in_token: str):
+async def created_post(
+        async_client: AsyncClient,
+        logged_in_token: str
+):
     return await create_post(body="Test Post", async_client=async_client, logged_in_token=logged_in_token)
 
 
 @pytest.fixture()
-async def created_comment(async_client: AsyncClient, created_post: dict, logged_in_token: str):
+async def created_comment(
+        async_client: AsyncClient,
+        created_post: dict,
+        logged_in_token: str
+):
     return await create_comment(body="Test Comment",
                                 post_id=created_post["id"],
                                 async_client=async_client,
@@ -43,7 +51,11 @@ async def created_comment(async_client: AsyncClient, created_post: dict, logged_
 
 
 @pytest.mark.anyio
-async def test_create_post(async_client: AsyncClient, logged_in_token: str):
+async def test_create_post(
+        async_client: AsyncClient,
+        registered_user: dict,
+        logged_in_token: str
+):
     body = "Test Post"
 
     response = await async_client.post(
@@ -53,11 +65,18 @@ async def test_create_post(async_client: AsyncClient, logged_in_token: str):
     )
 
     assert response.status_code == 201
-    assert {"id": 1, "body": body}.items() <= response.json().items()
+    assert {"id": 1,
+            "body": body,
+            "user_id": registered_user["id"]
+            }.items() <= response.json().items()
 
 
 @pytest.mark.anyio
-async def test_create_post_when_token_expired(async_client: AsyncClient, registered_user: dict, mocker):
+async def test_create_post_when_token_expired(
+        async_client: AsyncClient,
+        registered_user: dict,
+        mocker
+):
     mocker.patch("src.security.access_token_expire_minutes", return_value=-1)
     token = security.create_access_token(registered_user["email"])
     response = await async_client.post(
@@ -71,7 +90,10 @@ async def test_create_post_when_token_expired(async_client: AsyncClient, registe
 
 
 @pytest.mark.anyio
-async def test_create_post_missing_data(async_client: AsyncClient, logged_in_token: str):
+async def test_create_post_missing_data(
+        async_client: AsyncClient,
+        logged_in_token: str
+):
     response = await async_client.post(
         "/post",
         json={},
@@ -82,7 +104,10 @@ async def test_create_post_missing_data(async_client: AsyncClient, logged_in_tok
 
 
 @pytest.mark.anyio
-async def test_get_all_posts(async_client: AsyncClient, created_post: dict):
+async def test_get_all_posts(
+        async_client: AsyncClient,
+        created_post: dict
+):
     response = await async_client.get("/post")
 
     assert response.status_code == 200
@@ -90,13 +115,19 @@ async def test_get_all_posts(async_client: AsyncClient, created_post: dict):
 
 
 @pytest.mark.anyio
-async def test_create_comment(async_client: AsyncClient, created_post: dict, logged_in_token: str):
+async def test_create_comment(
+        async_client: AsyncClient,
+        created_post: dict,
+        registered_user: dict,
+        logged_in_token: str
+):
     body = "Test Comment"
 
     response = await async_client.post(
         "/comment",
         json={"body": body,
-              "post_id": created_post["id"]
+              "post_id": created_post["id"],
+              "user_id": registered_user["id"]
               },
         headers={"Authorization": f"Bearer {logged_in_token}"}
     )
@@ -110,10 +141,11 @@ async def test_create_comment(async_client: AsyncClient, created_post: dict, log
 
 
 @pytest.mark.anyio
-async def test_get_comments_on_post(async_client: AsyncClient,
-                                    created_post: dict,
-                                    created_comment: dict
-                                    ):
+async def test_get_comments_on_post(
+        async_client: AsyncClient,
+        created_post: dict,
+        created_comment: dict
+):
     response = await async_client.get(
         f"post/{created_post['id']}/comment"
     )
@@ -123,9 +155,10 @@ async def test_get_comments_on_post(async_client: AsyncClient,
 
 
 @pytest.mark.anyio
-async def test_get_comments_on_post_missing_data(async_client: AsyncClient,
-                                                 created_post: dict
-                                                 ):
+async def test_get_comments_on_post_missing_data(
+        async_client: AsyncClient,
+        created_post: dict
+):
     response = await async_client.get(
         f"post/{created_post['id']}/comment"
     )
@@ -135,9 +168,11 @@ async def test_get_comments_on_post_missing_data(async_client: AsyncClient,
 
 
 @pytest.mark.anyio
-async def test_get_post_with_comment(async_client: AsyncClient,
-                                     created_post: dict,
-                                     created_comment: dict):
+async def test_get_post_with_comment(
+        async_client: AsyncClient,
+        created_post: dict,
+        created_comment: dict
+):
     response = await async_client.get(
         f"post/{created_post['id']}"
     )
@@ -150,9 +185,11 @@ async def test_get_post_with_comment(async_client: AsyncClient,
 
 
 @pytest.mark.anyio
-async def test_get_missing_post_with_comment(async_client: AsyncClient,
-                                             created_post: dict,
-                                             created_comment: dict):
+async def test_get_missing_post_with_comment(
+        async_client: AsyncClient,
+        created_post: dict,
+        created_comment: dict
+):
     response = await async_client.get(
         "post/2"
     )
