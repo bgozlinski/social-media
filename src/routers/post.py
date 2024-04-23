@@ -29,12 +29,13 @@ async def find_post(post_id: int) -> UserPost:
 
 
 @router.post("/post", response_model=UserPost, status_code=201)
-async def create_post(post: UserPostIn,
-                      current_user: Annotated[User, Depends(get_current_user)]
-                      ) -> dict:
+async def create_post(
+        post: UserPostIn,
+        current_user: Annotated[User, Depends(get_current_user)]
+) -> dict:
     logger.info("Creating post")
 
-    data = post.model_dump()
+    data = {**post.model_dump(), "user_id": current_user.id}
     query = post_table.insert().values(data)
 
     logger.debug(query)
@@ -57,9 +58,10 @@ async def get_all_posts():
 
 
 @router.post("/comment", response_model=Comment, status_code=201)
-async def create_comment(comment: CommentIn,
-                         current_user: Annotated[User, Depends(get_current_user)]
-                         ) -> dict:
+async def create_comment(
+        comment: CommentIn,
+        current_user: Annotated[User, Depends(get_current_user)]
+) -> dict:
 
     logger.info("Creating comment")
 
@@ -68,7 +70,7 @@ async def create_comment(comment: CommentIn,
         logger.error(f"No post with id: {comment.post_id}")
         raise HTTPException(status_code=404, detail="Post not found")
 
-    data = comment.model_dump()
+    data = {**comment.model_dump(), "user_id": current_user.id}
     query = comment_table.insert().values(data)
 
     logger.debug(query)
