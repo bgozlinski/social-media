@@ -5,10 +5,12 @@ from src.models.post import (
     UserPostIn,
     Comment,
     CommentIn,
-    UserPostWithComments
+    UserPostWithComments,
 )
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from src.database import comment_table, post_table, database
+from src.models.user import User
+from src.security import get_current_user, oauth2_scheme
 
 
 router = APIRouter()
@@ -27,8 +29,9 @@ async def find_post(post_id: int) -> UserPost:
 
 
 @router.post("/post", response_model=UserPost, status_code=201)
-async def create_post(post: UserPostIn):
+async def create_post(post: UserPostIn, request: Request):
     logger.info("Creating post")
+    current_user: User = await get_current_user(await oauth2_scheme(request)) # noqa
 
     data = post.model_dump()
     query = post_table.insert().values(data)
@@ -53,8 +56,9 @@ async def get_all_posts():
 
 
 @router.post("/comment", response_model=Comment, status_code=201)
-async def create_comment(comment: CommentIn):
+async def create_comment(comment: CommentIn, request: Request):
     logger.info("Creating comment")
+    current_user: User = await get_current_user(await oauth2_scheme(request))  # noqa
 
     post = await find_post(comment.post_id)
     if not post:
