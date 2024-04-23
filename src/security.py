@@ -18,9 +18,11 @@ logger = logging.getLogger(__name__)
 pwd_context = CryptContext(schemes=["bcrypt"])
 
 
-authenticate_user_credentials_exceptions = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                                         detail="Could not validate credentials"
-                                                         )
+credentials_exception = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Could not validate credentials",
+    headers={"WWW-Authenticate": "Bearer"},
+)
 
 
 def access_token_expire_minutes() -> int:
@@ -100,8 +102,33 @@ async def authenticate_user(email: str, password: str) -> dict:
     user = await get_user(email)
 
     if not user:
-        raise authenticate_user_credentials_exceptions
+        raise credentials_exception
     if not verify_password(password, user.password):
-        raise authenticate_user_credentials_exceptions
+        raise credentials_exception
 
+    return user
+
+
+async def get_current_user(token: str) -> Optional[dict]:
+
+    try:
+        payload = jwt.decode(token=token, key=config.SECRET_KEY, algorithms=[config.ALGORITHM])
+        email = payload.get("sub")
+
+        if email is None:
+            raise credentials_exception
+
+    except jwt.ExpiredSignatureError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
+    except jwt.JWTError as e:
+        raise credentials_exception from e
+
+    user = await get_user(email=email)
+
+    if user is None:
+        raise credentials_exception
     return user
