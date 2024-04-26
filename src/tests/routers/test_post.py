@@ -70,7 +70,7 @@ async def created_comment(
 @pytest.mark.anyio
 async def test_create_post(
         async_client: AsyncClient,
-        registered_user: dict,
+        confirmed_user: dict,
         logged_in_token: str
 ):
     body = "Test Post"
@@ -84,18 +84,18 @@ async def test_create_post(
     assert response.status_code == 201
     assert {"id": 1,
             "body": body,
-            "user_id": registered_user["id"]
+            "user_id": confirmed_user["id"]
             }.items() <= response.json().items()
 
 
 @pytest.mark.anyio
 async def test_create_post_when_token_expired(
         async_client: AsyncClient,
-        registered_user: dict,
+        confirmed_user: dict,
         mocker
 ):
     mocker.patch("src.security.access_token_expire_minutes", return_value=-1)
-    token = security.create_access_token(registered_user["email"])
+    token = security.create_access_token(confirmed_user["email"])
     response = await async_client.post(
         "/post",
         json={"body": "Test Post"},
@@ -103,7 +103,7 @@ async def test_create_post_when_token_expired(
     )
 
     assert response.status_code == 401
-    assert "Token expired" in response.json()["detail"]
+    assert "Token has expired" in response.json()["detail"]
 
 
 @pytest.mark.anyio
@@ -158,7 +158,7 @@ async def test_get_all_posts_sorting(
     assert response.status_code == 200
 
     data = response.json()
-    expected_order = [2, 1]
+    expected_order = [1, 2]
     post_ids = [post["id"] for post in data]
 
     assert post_ids == expected_order
@@ -168,7 +168,7 @@ async def test_get_all_posts_sorting(
 async def test_create_comment(
         async_client: AsyncClient,
         created_post: dict,
-        registered_user: dict,
+        confirmed_user: dict,
         logged_in_token: str
 ):
     body = "Test Comment"
@@ -177,7 +177,7 @@ async def test_create_comment(
         "/comment",
         json={"body": body,
               "post_id": created_post["id"],
-              "user_id": registered_user["id"]
+              "user_id": confirmed_user["id"]
               },
         headers={"Authorization": f"Bearer {logged_in_token}"}
     )
