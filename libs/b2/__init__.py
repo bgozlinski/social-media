@@ -20,7 +20,7 @@ def s3_client():
 def s3_upload_file(local_file: str, file_name: str):
     client = s3_client()
     bucket_name = config.S3_BUCKET_NAME
-    logger.debug(f"Uploading {local_file} to B2 as {file_name}")
+    logger.debug(f"Uploading {local_file} to S3 as {file_name}")
 
     client.upload_file(
         Filename=local_file,
@@ -30,6 +30,6 @@ def s3_upload_file(local_file: str, file_name: str):
 
     download_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
 
-    logger.debug(f"Uploaded {local_file} to B2 and got download url {download_url}")
+    logger.debug(f"Uploaded {local_file} to S3 and got download url {download_url}")
 
     return download_url
