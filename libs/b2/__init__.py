@@ -1,35 +1,33 @@
 import logging
 from functools import lru_cache
-import b2sdk as b2
+import boto3
 from src.config import config
 
 logger = logging.getLogger(__name__)
 
 
 @lru_cache()
-def b2_api():
-    logger.debug("Creating and authorizing B2 API")
-    info = b2.InMemoryAccountInfo()
-    b2_api = b2.B2Api(info)
-
-    b2_api.authorize_account("production", config.B2_KEY_ID, config.B2_APPLICATION_KEY)
-    return b2_api
-
-
-def b2_get_bucket(api: b2.B2Api):
-    return api.get_bucket_by_name(config.B2_BUCKET_NAME)
+def s3_client():
+    logger.debug("Creating S3 client")
+    session = boto3.Session(
+        aws_access_key_id=config.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
+    )
+    return session.client('s3')
 
 
-def b2_upload_file(local_file: str, file_name: str):
-    api = b2_api()
+def s3_upload_file(local_file: str, file_name: str):
+    client = s3_client()
+    bucket_name = config.S3_BUCKET_NAME
     logger.debug(f"Uploading {local_file} to B2 as {file_name}")
 
-    uploaded_file = b2_get_bucket(api).upload_local_file(
-        local_file=local_file,
-        file_name=file_name
+    client.upload_file(
+        Filename=local_file,
+        Bucket=bucket_name,
+        Key=file_name
     )
 
-    download_url = api.get_download_url_for_fileid(uploaded_file.id_)
+    download_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
 
     logger.debug(f"Uploaded {local_file} to B2 and got download url {download_url}")
 
