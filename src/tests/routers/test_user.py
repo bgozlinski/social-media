@@ -1,6 +1,6 @@
 import pytest
 from httpx import AsyncClient
-from fastapi import Request
+from fastapi import BackgroundTasks
 
 
 async def register_user(async_client: AsyncClient,
@@ -37,9 +37,9 @@ async def test_register_user_already_exists(async_client: AsyncClient, registere
 
 @pytest.mark.anyio
 async def test_confirm_user(async_client: AsyncClient, mocker):
-    spy = mocker.spy(Request, "url_for")
+    spy = mocker.spy(BackgroundTasks, "add_task")
     await register_user(async_client=async_client, email="test@example.com", password="1234")
-    confirmation_url = str(spy.spy_return)
+    confirmation_url = str(spy.call_args[1]["confirmation_url"])
     response = await async_client.get(confirmation_url)
 
     assert response.status_code == 200
@@ -47,11 +47,11 @@ async def test_confirm_user(async_client: AsyncClient, mocker):
 
 
 @pytest.mark.anyio
-async def test_confirm_user_expired_toekn(async_client: AsyncClient, mocker):
+async def test_confirm_user_expired_tokenn(async_client: AsyncClient, mocker):
     mocker.patch("src.security.confirm_token_expire_minutes", return_value=-1)
-    spy = mocker.spy(Request, "url_for")
+    spy = mocker.spy(BackgroundTasks, "add_task")
     await register_user(async_client=async_client, email="test@example.com", password="1234")
-    confirmation_url = str(spy.spy_return)
+    confirmation_url = str(spy.call_args[1]["confirmation_url"])
     response = await async_client.get(confirmation_url)
 
     assert response.status_code == 401
@@ -89,7 +89,6 @@ async def test_login_user_not_confirmed(
         }
     )
     assert response.status_code == 401
-
 
 
 @pytest.mark.anyio
