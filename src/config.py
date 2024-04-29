@@ -15,9 +15,9 @@ class GlobalConfig(BaseConfig):
     ALGORITHM: str = "HS256"
     MAILGUN_API_KEY: Optional[str] = None
     MAILGUN_DOMAIN: Optional[str] = None
-    B2_KEY_ID: Optional[str] = None
-    B2_APPLICATION_KEY: Optional[str] = None
-    B2_BUCKET_NAME: Optional[str] = None
+    AWS_ACCESS_KEY_ID: Optional[str] = None
+    AWS_SECRET_ACCESS_KEY: Optional[str] = None
+    S3_BUCKET_NAME: Optional[str] = None
 
 
 class DevConfig(GlobalConfig):
