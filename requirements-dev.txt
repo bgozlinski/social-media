@@ -3,3 +3,4 @@ pytest-mock
 httpx
 pytest-anyio
 isort
+pyfakefs

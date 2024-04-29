@@ -32,7 +32,6 @@ async def upload_file(file: UploadFile):
             detail=str(e)
         )
     finally:
-        # Make sure to clean up the temporary file
         os.unlink(filename)
 
     return {"detail": f"Successfully uploaded {file.filename}", "file_url": file_url}
