@@ -12,10 +12,11 @@ from src.models.post import (
     UserPostWithLikes
 )
 import sqlalchemy
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Request, Depends, BackgroundTasks, Request
 from src.database import comment_table, post_table, database, like_table
 from src.models.user import User
 from src.security import get_current_user, oauth2_scheme
+from src.tasks import generate_and_add_to_post
 
 
 router = APIRouter()
@@ -45,7 +46,10 @@ async def find_post(
 @router.post("/post", response_model=UserPost, status_code=201)
 async def create_post(
         post: UserPostIn,
-        current_user: Annotated[User, Depends(get_current_user)]
+        current_user: Annotated[User, Depends(get_current_user)],
+        background_tasks: BackgroundTasks,
+        request: Request,
+        prompt: str = None
 ) -> dict:
     logger.info("Creating post")
 
@@ -55,6 +59,17 @@ async def create_post(
     logger.debug(query)
 
     last_record_id = await database.execute(query)
+
+    if prompt:
+        background_tasks.add_task(
+            generate_and_add_to_post,
+            current_user.email,
+            last_record_id,
+            request.url_for("get_post_with_comments", post_id=last_record_id),
+            database,
+            prompt
+        )
+
     return {
         **data,
         "id": last_record_id

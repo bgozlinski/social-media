@@ -19,6 +19,7 @@ class GlobalConfig(BaseConfig):
     AWS_SECRET_ACCESS_KEY: Optional[str] = None
     S3_BUCKET_NAME: Optional[str] = None
     AWS_REGION: Optional[str] = None
+    DEEPAI_API_KEY: Optional[str] = None
 
 
 class DevConfig(GlobalConfig):
