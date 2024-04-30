@@ -22,6 +22,18 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def create_credentials_exception(detail: str) -> HTTPException:
+    """
+    Create a standardized HTTP exception for credential issues.
+
+    This function constructs an HTTP exception specifically for authentication failures, including
+    the setting of WWW-Authenticate headers.
+
+    Args:
+        detail (str): A message detailing the reason for the exception.
+
+    Returns:
+        HTTPException: The constructed HTTP exception with a 401 status code.
+    """
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail=detail,
@@ -38,6 +50,18 @@ def confirm_token_expire_minutes() -> int:
 
 
 def create_access_token(email: str) -> str:
+    """
+    Generates a JWT access token for a given email.
+
+    This token includes an expiration time (default 30 minutes from creation) and is encoded with
+    the application's secret key.
+
+    Args:
+        email (str): The email address to encode within the JWT.
+
+    Returns:
+        str: The encoded JWT access token.
+    """
     logger.debug(f"Creating access token for {email}")
 
     expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=access_token_expire_minutes())
@@ -56,6 +80,18 @@ def create_access_token(email: str) -> str:
 
 
 def create_confirmation_token(email: str) -> str:
+    """
+    Generates a JWT confirmation token for a given email.
+
+    This token includes an expiration time (default 1440 minutes from creation) and is specifically
+    intended for email confirmation processes.
+
+    Args:
+        email (str): The email address to encode within the JWT.
+
+    Returns:
+        str: The encoded JWT confirmation token.
+    """
     logger.debug(f"Creating confirmation token for {email}")
 
     expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=confirm_token_expire_minutes())
@@ -77,7 +113,22 @@ def get_subject_for_token_type(
         token: str,
         type: Literal["access", "confirmation"]
 ) -> str:
+    """
+    Extracts the subject (email) from a JWT for a specific token type (access or confirmation).
 
+    This function validates the token, checks its type, and extracts the email subject if valid.
+    It handles token expiration and format errors by raising appropriate HTTP exceptions.
+
+    Args:
+        token (str): The JWT from which to extract the subject.
+        type (Literal["access", "confirmation"]): The expected type of the token.
+
+    Returns:
+        str: The email encoded in the token.
+
+    Raises:
+        HTTPException: If the token is expired, invalid, or does not match the expected type.
+    """
     try:
         payload = jwt.decode(token=token, key=config.SECRET_KEY, algorithms=[config.ALGORITHM])
     except jwt.ExpiredSignatureError as e:
@@ -148,6 +199,22 @@ async def get_user(email: str) -> Optional[dict]:
 
 
 async def authenticate_user(email: str, password: str) -> dict:
+    """
+    Authenticates a user by their email and password.
+
+    Verifies the user's password and checks if the user's email is confirmed. Raises an HTTP
+    exception for authentication failure.
+
+    Args:
+        email (str): The user's email.
+        password (str): The user's password.
+
+    Returns:
+        dict: The authenticated user's record if successful.
+
+    Raises:
+        HTTPException: For any authentication or confirmation issues.
+    """
     logger.debug(f"Authenticating user {email}")
     user = await get_user(email)
 
@@ -162,6 +229,21 @@ async def authenticate_user(email: str, password: str) -> dict:
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Optional[dict]:
+    """
+    Retrieves the current user based on a provided JWT access token.
+
+    Decodes the token to obtain the user's email and fetches the user record from the database.
+    Raises an exception if the token is invalid or the user cannot be found.
+
+    Args:
+        token (Annotated[str, Depends(oauth2_scheme)]): The JWT access token.
+
+    Returns:
+        dict | None: The user's record if found, otherwise raises an exception.
+
+    Raises:
+        HTTPException: If the user cannot be located or the token is invalid.
+    """
     email = get_subject_for_token_type(token, "access")
     user = await get_user(email=email)
 

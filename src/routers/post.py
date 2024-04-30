@@ -34,6 +34,15 @@ select_post_and_likes = (
 async def find_post(
         post_id: int
 ) -> UserPost:
+    """
+    Retrieve a post by its ID.
+
+    Args:
+    post_id (int): The unique identifier of the post.
+
+    Returns:
+    UserPost: The post retrieved from the database.
+    """
     logger.info(f"Finding post with id: {post_id}")
 
     query = post_table.select().where(post_table.c.id == post_id)
@@ -51,6 +60,19 @@ async def create_post(
         request: Request,
         prompt: str = None
 ) -> dict:
+    """
+    Create a new user post and optionally trigger background tasks based on provided prompt.
+
+    Args:
+    post (UserPostIn): The post input model containing the content of the post.
+    current_user (User): The current authenticated user.
+    background_tasks (BackgroundTasks): Background tasks manager for asynchronous job execution.
+    request (Request): The request object.
+    prompt (str, optional): Optional prompt for triggering additional background tasks.
+
+    Returns:
+    dict: The newly created post with additional metadata.
+    """
     logger.info("Creating post")
 
     data = {**post.model_dump(), "user_id": current_user.id}
@@ -77,6 +99,9 @@ async def create_post(
 
 
 class PostSorting(str, Enum):
+    """
+    Enum for sorting posts in different ways.
+    """
     new = "new"
     old = "old"
     most_likes = "most_likes"
@@ -86,6 +111,15 @@ class PostSorting(str, Enum):
 async def get_all_posts(
         sorting: PostSorting = PostSorting.new
 ):
+    """
+    Retrieve all posts sorted based on the specified sorting criteria.
+
+    Args:
+    sorting (PostSorting): The sorting criteria for the posts (new, old, most_likes).
+
+    Returns:
+    List[UserPostWithLikes]: A list of posts with like counts.
+    """
     logger.info("Getting all posts")
 
     if sorting == PostSorting.new:
@@ -105,7 +139,16 @@ async def create_comment(
         comment: CommentIn,
         current_user: Annotated[User, Depends(get_current_user)]
 ) -> dict:
+    """
+    Create a new comment on a specific post, checking first if the post exists.
 
+    Args:
+    comment (CommentIn): The input model for the comment.
+    current_user (User): The current authenticated user.
+
+    Returns:
+    dict: The newly created comment with additional metadata.
+    """
     logger.info("Creating comment")
 
     post = await find_post(comment.post_id)
@@ -130,6 +173,15 @@ async def create_comment(
 async def get_comments_on_post(
         post_id: int
 ):
+    """
+    Retrieve all comments on a specific post.
+
+    Args:
+    post_id (int): The unique identifier of the post to retrieve comments for.
+
+    Returns:
+    List[Comment]: A list of comments associated with the specified post.
+    """
     logger.info("Getting comments on post")
 
     query = comment_table.select().where(comment_table.c.id == post_id)
@@ -141,6 +193,15 @@ async def get_comments_on_post(
 
 @router.get("/post/{post_id}", response_model=UserPostWithComments)
 async def get_post_with_comments(post_id: int):
+    """
+    Retrieve a post and its associated comments by the post ID.
+
+    Args:
+    post_id (int): The unique identifier of the post.
+
+    Returns:
+    UserPostWithComments: The post along with its comments.
+    """
     logger.info("Getting post with comments")
 
     query = select_post_and_likes.where(post_table.c.id == post_id)
@@ -163,6 +224,16 @@ async def like_post(
         like: PostLikeIn,
         current_user: Annotated[User, Depends(get_current_user)]
 ):
+    """
+    Record a like on a post by a user, verifying first if the post exists.
+
+    Args:
+    like (PostLikeIn): The input model for the like.
+    current_user (User): The current authenticated user.
+
+    Returns:
+    PostLike: The newly created like record.
+    """
     logger.info("Liking post")
 
     post = await find_post(like.post_id)
