@@ -84,7 +84,8 @@ async def test_create_post(
     assert response.status_code == 201
     assert {"id": 1,
             "body": body,
-            "user_id": confirmed_user["id"]
+            "user_id": confirmed_user["id"],
+            "image_url": None
             }.items() <= response.json().items()
 
 
